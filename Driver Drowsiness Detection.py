@@ -15,6 +15,13 @@ from MAR import mouth_aspect_ratio
 from HeadPose import getHeadTiltAndCoords
 from ImageAlignmentScript import imgAlig
 
+EYE_AR_THRESH = 0.25
+MOUTH_AR_THRESH = 0.7
+EYE_AR_CONSEC_FRAMES = 3
+COUNTER = 0
+detected= 0
+iouSum= 0
+
 def calculate_iou(box1, box2):
     #calculated for each object in each image separately
     # determine the coordinates of the intersection rectangle
@@ -33,19 +40,14 @@ def calculate_iou(box1, box2):
     iou = intersection / float(box1_area + box2_area - intersection)
     return iou
 
-# initialize dlib's face detector (HOG-based) and then create the
-# facial landmark predictor
-print("[INFO] loading facial landmark predictor...")
+def calculate_av_iou(detected, iouSum):
+    return iouSum/detected
+    
+
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(
     './dlib_shape_predictor/shape_predictor_68_face_landmarks.dat')
 
-# initialize the video stream and sleep for a bit, allowing the
-# camera sensor to warm up
-print("[INFO] initializing camera...")
-
-# vs = VideoStream(src=0).start()
-# vs = VideoStream(usePiCamera=True).start() # Raspberry Pi
 time.sleep(2.0)
 
 # 400x225 to 1024x576
@@ -66,10 +68,6 @@ image_points = np.array([
 (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
 (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
 
-EYE_AR_THRESH = 0.25
-MOUTH_AR_THRESH = 0.7
-EYE_AR_CONSEC_FRAMES = 3
-COUNTER = 0
 
 # grab the indexes of the facial landmarks for the mouth
 (mStart, mEnd) = (49, 68)
@@ -89,22 +87,20 @@ for item in annotatedImg:
     for i in range(len(images)):
        if(images[i]==path):
             
-            # frame=cv2.imread('./Annotations_Images/0_Parade_Parade_0_803.jpg')
             frame=cv2.imread('./Annotations_Images/%s' %(item[0]))
-        # frame = vs.read()
-            # frame = imutils.resize(frame, width=1024, height=576)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             size = gray.shape
             
             # detect faces in the grayscale frame
             rects = detector(gray, 0)
-            
+
             # check to see if a face was detected, and if so, draw the total
             # number of faces on the frame
             if len(rects) > 0:
                 text = "{} face(s) found".format(len(rects))
                 cv2.putText(frame, text, (10, 20),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                detected+=1
 
             # loop over the face detections
             for idx,rect in enumerate(rects):
@@ -120,7 +116,8 @@ for item in annotatedImg:
                 iouRectFormat=[rect.left(),rect.top(),rect.right(),rect.bottom()]
                 
                 iou=calculate_iou(annotations, iouRectFormat)
-                
+                iouSum += iou
+                av_iou = calculate_av_iou(detected,iouSum)
                 print(iou)
                 
                 aX,aY,aW,aH = annotations
@@ -261,18 +258,19 @@ for item in annotatedImg:
                 cv2.putText(frame, 'Head Tilt Degree: ' + str(head_tilt_degree[0]), (170, 20),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
+
         # extract the mouth coordinates, then use the
         # coordinates to compute the mouth aspect ratio
             # show the frameq
             cv2.imshow("Frame", frame)
-            key = cv2.waitKey(10000000) & 0xFF
+            key = cv2.waitKey(10000) & 0xFF
 
             # if the `q` key was pressed, break from the loop
             if key == ord("q"):
                 break
 
-# print(image_points)
 
+print('AverageIoU',av_iou)
 # do a bit of cleanup
 cv2.destroyAllWindows()
-vs.stop()
+
