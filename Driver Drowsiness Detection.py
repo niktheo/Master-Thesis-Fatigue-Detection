@@ -12,6 +12,7 @@ import numpy as np
 from EAR import eye_aspect_ratio
 from MAR import mouth_aspect_ratio
 from HeadPose import getHeadTiltAndCoords
+import drowsiness_visualizations as dv
 
 def calculate_iou(box1, box2):
     #calculated for each object in each image separately
@@ -43,7 +44,6 @@ predictor = dlib.shape_predictor(
 print("[INFO] initializing camera...")
 
 vs = VideoStream(src=0).start()
-# vs = VideoStream(usePiCamera=True).start() # Raspberry Pi
 time.sleep(2.0)
 
 # 400x225 to 1024x576
@@ -72,12 +72,17 @@ COUNTER = 0
 # grab the indexes of the facial landmarks for the mouth
 (mStart, mEnd) = (49, 68)
 
+# Initialize lists to store EAR and MAR values
+ear_values = []
+mar_values = []
+
+# Initialize an empty list to store EAR values over time
+ear_values_over_time = []
 while True:
     # grab the frame from the threaded video stream, resize it to
     # have a maximum width of 400 pixels, and convert it to
     # grayscale
     
-    #frame=cv2.imread('./Screenshot 2023-01-25 at 9.50.02 AM.jpg')
     
     frame = vs.read()
     frame = imutils.resize(frame, width=1024, height=576)
@@ -160,6 +165,16 @@ while True:
 
         # loop over the (x, y)-coordinates for the facial landmarks
         # and draw each of them
+        leftEAR = eye_aspect_ratio(leftEye)
+        rightEAR = eye_aspect_ratio(rightEye)
+        ear = (leftEAR + rightEAR) / 2.0
+        mouthMAR = mouth_aspect_ratio(mouth)
+        mar = mouthMAR
+
+        # Append EAR and MAR values to the lists
+        ear_values.append(ear)
+        mar_values.append(mar)
+        ear_values_over_time.append(ear)  
         for (i, (x, y)) in enumerate(shape):
             if i == 33:
                 # something to our key landmarks
@@ -247,7 +262,9 @@ while True:
         break
 
 # print(image_points)
-
+dv.plot_ear_over_time(ear_values_over_time)
+dv.plot_ear_and_mar_histograms(ear_values, mar_values)
+# dv.plot_performance_metrics(thresholds, precision_values, recall_values, f1_scores)
 # do a bit of cleanup
 cv2.destroyAllWindows()
 vs.stop()
