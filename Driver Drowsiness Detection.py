@@ -278,47 +278,47 @@ iouSum= 0
 # # do a bit of cleanup
 # cv2.destroyAllWindows()
 
-iou_thres=[0.4,0.5,0.6,0.70,0.75,0.80,0.85,0.90]
+# iou_thres=[0.4,0.5,0.6,0.70,0.75,0.80,0.85,0.90]
 
-def use_detections(iou_thres):
-    undetected=len(os.listdir('./Annotations_Images'))-len(os.listdir('./detections'))
+# def use_detections(iou_thres):
+#     undetected=len(os.listdir('./Annotations_Images'))-len(os.listdir('./detections'))
 
-    print(undetected)
-    detections=sorted(os.listdir('./detections'))
-    ground_truths=sorted(os.listdir('./ground_truths'))
+#     print(undetected)
+#     detections=sorted(os.listdir('./detections'))
+#     ground_truths=sorted(os.listdir('./ground_truths'))
     
-    for thres in iou_thres:
-        tp,tn,fn,fp=0,45,undetected,0
-        for idx,txt in enumerate(detections):
-            if txt not in ['FP_txt1','FP_txt2','FP_txt3','FP_txt4' ]:
-                f=open('./detections/%s'%txt)
-                for idx2,line in enumerate(f):
-                    line_lst=line.split()
-                    iou=line_lst[-1]
-                    label=line_lst[0]
-                    if float(iou)>=thres:
-                        tp+=1
-                    elif float(iou)<thres:
-                        fn+=1 
+#     for thres in iou_thres:
+#         tp,tn,fn,fp=0,45,undetected,0
+#         for idx,txt in enumerate(detections):
+#             if txt not in ['FP_txt1','FP_txt2','FP_txt3','FP_txt4' ]:
+#                 f=open('./detections/%s'%txt)
+#                 for idx2,line in enumerate(f):
+#                     line_lst=line.split()
+#                     iou=line_lst[-1]
+#                     label=line_lst[0]
+#                     if float(iou)>=thres:
+#                         tp+=1
+#                     elif float(iou)<thres:
+#                         fn+=1 
         
-        fp_paths=['FP_txt1','FP_txt2','FP_txt3','FP_txt4' ]
-        for path1 in fp_paths: 
-            fgt=open('./ground_truths/%s.txt'%path1)                
-            fpred=open('./detections/%s.txt'%path1)                
-            for idx3, linegt in enumerate(fgt):
-                line_lstgt=linegt.split()
-                label3=line_lstgt[0]
-                for idx4,linepred in enumerate(fpred):
-                    line_lstpred=linepred.split()
-                    label4=line_lstpred[0]
-                    iou4=line_lstpred[-1]
-                    print(label4)
-                if label3 != label4 and float(iou4)>=thres: fp+=1
-                elif label3 != label4 and float(iou4)<thres: fn+=1
+#         fp_paths=['FP_txt1','FP_txt2','FP_txt3','FP_txt4' ]
+#         for path1 in fp_paths: 
+#             fgt=open('./ground_truths/%s.txt'%path1)                
+#             fpred=open('./detections/%s.txt'%path1)                
+#             for idx3, linegt in enumerate(fgt):
+#                 line_lstgt=linegt.split()
+#                 label3=line_lstgt[0]
+#                 for idx4,linepred in enumerate(fpred):
+#                     line_lstpred=linepred.split()
+#                     label4=line_lstpred[0]
+#                     iou4=line_lstpred[-1]
+#                     print(label4)
+#                 if label3 != label4 and float(iou4)>=thres: fp+=1
+#                 elif label3 != label4 and float(iou4)<thres: fn+=1
 
 
-        fmetr=open('./metrics/metrics.txt','a+')
-        fmetr.write('for iou = %s tp = %s, fp = %s, fn = %s , tn =%s \n'%(thres,tp,fp,fn,tn))
+#         fmetr=open('./metrics/metrics.txt','a+')
+#         fmetr.write('for iou = %s tp = %s, fp = %s, fn = %s , tn =%s \n'%(thres,tp,fp,fn,tn))
 
 
-use_detections(iou_thres)
+# use_detections(iou_thres)
